@@ -1,0 +1,29 @@
+import requests
+from backend.config import ETHERSCAN_API_KEY
+from backend.db import tx_collection  # Adjust import if needed
+
+def get_wallet_overview(wallet_address: str):
+    total = tx_collection.count_documents({
+        "$or": [
+            {"from": wallet_address},
+            {"to": wallet_address}
+        ]
+    })
+
+    suspicious_count = tx_collection.count_documents({
+        "$or": [
+            {"from": wallet_address},
+            {"to": wallet_address}
+        ],
+        "suspicious": True
+    })
+
+    risk = int((suspicious_count / total) * 100) if total > 0 else 0
+
+    return {
+        "wallet": wallet_address,
+        "total": total,
+        "suspicious": suspicious_count,
+        "risk_score": risk
+    }
+
